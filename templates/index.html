@@ -33,9 +33,9 @@ Demo App
 
     <div class="container">
       <div class="split left">
-        <div class="centered">
-          {% for i in range(10): %}
-              {{i}}
+        <div class="images">
+          {% for i in value.split()[0:100]: %}
+              <img src="{{i}}" alt="{{i}}">
           {% endfor %}
         </div>
       </div>

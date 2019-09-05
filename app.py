@@ -6,7 +6,8 @@ Bootstrap(app)
 
 @app.route('/')
 def index():
-    a=12312
+    with open('files.txt', 'r') as f:
+    	a=f.read()
     return render_template('index.html', value=a)
 
 @app.route('/login')
