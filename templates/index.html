@@ -13,18 +13,14 @@ Demo App
     <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 <script>
-var urls = "iii";
+var urls = "";
 var ctx = null; 
 
 function add_rect(line){
+  //TODO darw cat different color
   ctx.strokeStyle = 'blue';
   var elems=line.split(" ")
   ctx.strokeRect(elems[1]*500-elems[3]*500/2, elems[2]*500-elems[4]*500/2, elems[3]*500, elems[4]*500);
-  //TODO cat
-}
-
-function remove_rect(x,y,w,h){
-
 
 }
 
@@ -32,13 +28,10 @@ function remove_rect(x,y,w,h){
 $.get('/static/files.txt', function(data) {
    urls=data;
    elems=urls.split("\n");
-  /* for each (elem in elems) {
-      console.log(elem);
-    }*/
-   //elems.forEach(display_img);
    innerhtml="";
-   for(i=0; i<10; i++){//pagnation TODO
-     innerhtml+="<img class='thumbs' width=100 height=100 id='img"+i+"' src='"+elems[i]+"'>";
+
+   for(i=0; i<20; i++){//pagnation TODO
+     innerhtml+="<img class='thumbs' width=60 height=60 id='img"+i+"' src='"+elems[i]+"'>";
    }
    $("#imgs_div").html(innerhtml);
 
@@ -56,15 +49,20 @@ $.get('/static/files.txt', function(data) {
       console.log(txt_url);
       init(image_url); 
       $.get(txt_url, function(data) {
+        
         $("#mark_box").html(data);
-          lines=data.split("\n");
+        $("#infobox").html(data);
+        
+        lines=data.split("\n");
           for(var i=0; i<lines.length; i++){
-          //for(var i=0; i<1; i++){
-          
             add_rect(lines[i]);
+          
           }
-
-      }, 'text');
+      }).fail(function(){ 
+        $("#mark_box").html("");
+        $("#infobox").html("");
+        //error
+      });
     });
   
 
@@ -118,9 +116,7 @@ $.get('/static/files.txt', function(data) {
               ctx.strokeRect(rects[i].startX, rects[i].startY, rects[i].w, rects[i].h);
               txt.innerHTML+=rects[i].startX/500+", "+ rects[i].startY/400+", " + rects[i].w/500 + ", " + rects[i].h/400+"\n" ;
             }
-            //txt.innerHTML=rect.startX+", "+ rect.startY+", " + rect.w + ", " + rect.h + "| " + rect.startX/500+", "+ rect.startY/400+", " + rect.w/500 + ", " + rect.h/400 ;
-           
-            console.log(curr_rect_idx);
+            
         }
     }
 
