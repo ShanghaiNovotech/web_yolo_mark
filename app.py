@@ -6,9 +6,9 @@ Bootstrap(app)
 
 @app.route('/')
 def index():
-    with open('files.txt', 'r') as f:
-    	a=f.read()
-    return render_template('index.html', value=a)
+    #with open('files.txt', 'r') as f:
+    #	a=f.read()
+    return render_template('index.html', value=0)
 
 @app.route('/login')
 def login():
