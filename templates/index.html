@@ -23,7 +23,7 @@ $.get('/static/files.txt', function(data) {
     }*/
    //elems.forEach(display_img);
    innerhtml="";
-   for(i=0; i<10; i++){
+   for(i=0; i<10; i++){//pagnation TODO
      innerhtml+="<img class='thumbs' width=100 height=100 id='img"+i+"' src='"+elems[i]+"'>";
    }
    $("#imgs_div").html(innerhtml);
@@ -32,17 +32,73 @@ $.get('/static/files.txt', function(data) {
     {
 
       console.log(this.id);
-      // Do stuff, get id of image perhaps?
-      var id = this.id;
-      $("#canvas")
+      image_url=$("#"+this.id).attr('src');
+      txt_url="";
+      if (image_url.indexOf(".jpg") > -1) {
+         txt_url = image_url.replace('.jpg','.txt' );
+      }else{
+         //nothing yet
+      }
+      console.log(txt_url);
+      init(image_url); 
+      $.get(txt_url, function(data) {
+        $("#mark_box").html(data);
+      }, 'text');
     });
   
+
+    var canvas = document.getElementById('canvas');
+    var txt= document.getElementById('infobox');
+    var ctx = canvas.getContext('2d');
+    var rect = {};
+    var rects =[];
+    var drag = false;
+    var imageObj = null;
+    var curr_rect_idx=0;
+
+    function init(url) {
+        imageObj = new Image();
+        //ctx.clearRect(0, 0, 500, 500);
+        imageObj.onload = function () { ctx.drawImage(imageObj, 0, 0); };
+        imageObj.src = url;
+        canvas.addEventListener('mousedown', mouseDown, false);
+        canvas.addEventListener('mouseup', mouseUp, false);
+        canvas.addEventListener('mousemove', mouseMove, false);
+    }
+
+    function mouseDown(e) {
+        var rect={};
+        rect.startX = e.pageX - this.offsetLeft;
+        rect.startY = e.pageY - this.offsetTop;
+        rects[curr_rect_idx]=rect;
+        drag = true;
+    }
+
+    function mouseUp() { 
+      drag = false; 
+      curr_rect_idx++;
+
+    }
+
+    function mouseMove(e) {
+        if (drag) {
+            //ctx.clearRect(0, 0, 500, 500);
+            ctx.drawImage(imageObj, 0, 0);
+            rects[curr_rect_idx].w = (e.pageX - this.offsetLeft) - rects[curr_rect_idx].startX;
+            rects[curr_rect_idx].h = (e.pageY - this.offsetTop) - rects[curr_rect_idx].startY;
+            ctx.strokeStyle = 'red';
+            txt.innerHTML="";
+            for(i=0; i<=curr_rect_idx; i++){
+              ctx.strokeRect(rects[i].startX, rects[i].startY, rects[i].w, rects[i].h);
+              txt.innerHTML+=rects[i].startX/500+", "+ rects[i].startY/400+", " + rects[i].w/500 + ", " + rects[i].h/400+"\n" ;
+            }
+            //txt.innerHTML=rect.startX+", "+ rect.startY+", " + rect.w + ", " + rect.h + "| " + rect.startX/500+", "+ rect.startY/400+", " + rect.w/500 + ", " + rect.h/400 ;
+           
+            console.log(curr_rect_idx);
+        }
+    }
+
 }, 'text');
-
-
-
-
-
 
 </script>
 {% endblock %}
@@ -84,8 +140,12 @@ $.get('/static/files.txt', function(data) {
       <div class="split right">
         <div class="centered">
           <img src="img_avatar.png" alt="Avatar man">
-          <h2>John Doe</h2>
-          <p id="msgid">Some text here too.</p>
+          <pre>
+            <p id="mark_box">EMPTY</p>
+          </pre>
+          <pre>
+          <p id="infobox">Some text here too.</p>
+          </pre>
         </div>
       </div>
    </div><!-- /.container -->
