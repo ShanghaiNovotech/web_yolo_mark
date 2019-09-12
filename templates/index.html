@@ -14,6 +14,20 @@ Demo App
 
 <script>
 var urls = "iii";
+var ctx = null; 
+
+function add_rect(line){
+  ctx.strokeStyle = 'blue';
+  var elems=line.split(" ")
+  ctx.strokeRect(elems[1]*500-elems[3]*500/2, elems[2]*500-elems[4]*500/2, elems[3]*500, elems[4]*500);
+  //TODO cat
+}
+
+function remove_rect(x,y,w,h){
+
+
+}
+
 
 $.get('/static/files.txt', function(data) {
    urls=data;
@@ -43,13 +57,20 @@ $.get('/static/files.txt', function(data) {
       init(image_url); 
       $.get(txt_url, function(data) {
         $("#mark_box").html(data);
+          lines=data.split("\n");
+          for(var i=0; i<lines.length; i++){
+          //for(var i=0; i<1; i++){
+          
+            add_rect(lines[i]);
+          }
+
       }, 'text');
     });
   
 
     var canvas = document.getElementById('canvas');
     var txt= document.getElementById('infobox');
-    var ctx = canvas.getContext('2d');
+    ctx = canvas.getContext('2d');
     var rect = {};
     var rects =[];
     var drag = false;
@@ -58,8 +79,12 @@ $.get('/static/files.txt', function(data) {
 
     function init(url) {
         imageObj = new Image();
-        //ctx.clearRect(0, 0, 500, 500);
-        imageObj.onload = function () { ctx.drawImage(imageObj, 0, 0); };
+        ctx.clearRect(0, 0, 500, 500);
+        imageObj.onload = function () { 
+          ctx.drawImage(imageObj, 0, 0); 
+          ctx.drawImage(imageObj, 0, 0, imageObj.width,    imageObj.height,     // source rectangle
+                   0, 0, canvas.width, canvas.height);
+        };
         imageObj.src = url;
         canvas.addEventListener('mousedown', mouseDown, false);
         canvas.addEventListener('mouseup', mouseUp, false);
@@ -83,6 +108,7 @@ $.get('/static/files.txt', function(data) {
     function mouseMove(e) {
         if (drag) {
             //ctx.clearRect(0, 0, 500, 500);
+
             ctx.drawImage(imageObj, 0, 0);
             rects[curr_rect_idx].w = (e.pageX - this.offsetLeft) - rects[curr_rect_idx].startX;
             rects[curr_rect_idx].h = (e.pageY - this.offsetTop) - rects[curr_rect_idx].startY;
@@ -113,7 +139,7 @@ $.get('/static/files.txt', function(data) {
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">YOLO MARK</a>
+          <a class="navbar-brand" href="#">WEB YOLO MARK</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
