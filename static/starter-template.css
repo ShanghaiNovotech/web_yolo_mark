@@ -28,7 +28,7 @@ body {
 .right {
   right: 0;
   width: 30%;
-  background-color: red;
+  background-color: #AAA;
 }
 
 /* If you want the content centered horizontally and vertically */

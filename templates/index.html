@@ -71,12 +71,12 @@ $.get('/static/files.txt', function(data) {
       }else{
          //nothing yet
       }
-      console.log(txt_url);
+      //print filename.
+      $("#pic_info").html(image_url.split("/").slice(-1)[0]);
       load_big_image(image_url); 
       $.get(txt_url, function(data) {
         var _data=data.replace(emptylinesRe,"");
         $("#mark_box").html(_data);
-        //$("#infobox").html(_data);
         
         lines=_data.split("\n");
           for(var i=0; i<lines.length; i++){
@@ -175,8 +175,8 @@ $.get('/static/files.txt', function(data) {
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="#">Home</a></li>
-            <li><a href="{{ url_for('login') }}">Login</a></li>
-            <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
+            <!--<li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Sign Up</a></li>-->
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -196,12 +196,12 @@ $.get('/static/files.txt', function(data) {
 
       <div class="split right">
         <div class="centered">
-          <img src="img_avatar.png" alt="Avatar man">
+          <p id="pic_info">info</p>
           <pre>
             <p id="mark_box">EMPTY</p>
           </pre>
           <pre>
-          <p id="infobox">Some text here too.</p>
+          <p id="infobox">Output Box.</p>
           </pre>
         </div>
       </div>
