@@ -44,3 +44,8 @@ body {
 .centered img {
   /*width: 150px;*/
 }
+
+.form-control {
+    display: block;
+    width: 60px;
+}

@@ -10,6 +10,7 @@ Demo App
     
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="/static/jquery.cookasdf.js"></script>
 
 <script>
 /* 
@@ -20,6 +21,7 @@ y=y croodinate center of the bbox
 w=width of the bbox
 h=height of the bbox
 */
+var _cookie = $.cookie;
 var urls = "";
 var ctx = null; 
 var canvas_w=600;
@@ -45,7 +47,6 @@ $.get('/static/files.txt', function(data) {
   $("#canvas").height(canvas_h);
   urls=data;
   elems=urls.split("\n");
-  innerhtml="";
   var canvas = document.getElementById('canvas');
   var txt= document.getElementById('infobox');
   ctx = canvas.getContext('2d');
@@ -55,106 +56,129 @@ $.get('/static/files.txt', function(data) {
   var rects =[];
   var drag = false;
   var imageObj = null;
+  var page_idx = null;
+  var per_page = 25;
 
-   for(i=0; i<20; i++){//pagnation TODO
-     innerhtml+="<img class='thumbs' width=60 height=60 id='img"+i+"' src='"+elems[i]+"'>";
-   }
-   $("#imgs_div").html(innerhtml);
-
-    $(".thumbs").on("click", function()
-    {
-      console.log(this.id);
-      image_url=$("#"+this.id).attr('src');
-      txt_url="";
-      if (image_url.indexOf(".jpg") > -1) {
-         txt_url = image_url.replace('.jpg','.txt' );
+  function get_thumbs_html(){
+    if(page_idx==null){
+      if(typeof _cookie('page_idx_cookie') !== 'undefined'){
+        page_idx = _cookie('page_idx_cookie');
       }else{
-         //nothing yet
+        page_idx = 0;
+        _cookie('page_idx_cookie', 0, { expires: 365, path: '/' });
       }
-      //print filename.
-      $("#pic_info").html(image_url.split("/").slice(-1)[0]);
-      load_big_image(image_url); 
-      $.get(txt_url, function(data) {
-        var _data=data.replace(emptylinesRe,"");
-        $("#mark_box").html(_data);
-        
-        lines=_data.split("\n");
-          for(var i=0; i<lines.length; i++){
-            if(lines[i].length>10){ //throw malformed away
-              process_data_line(lines[i]);
-            }
+    }
+    $("#page_idx").val(page_idx);
+    var innerhtml="";
+    for(i=0; i<per_page; i++){
+      var img_idx = i + page_idx * per_page;
+      innerhtml+="<img class='thumbs' width=50 height=50 id='img"+(img_idx)+"' src='"+elems[img_idx]+"'>";
+    }
+    return innerhtml;
+  }
+
+  $("#page_idx").val(page_idx);
+  $("#page_idx").change(function() {
+    page_idx=$("#page_idx").val();
+    _cookie('page_idx_cookie', page_idx, { expires: 365, path: '/' });
+    $("#imgs_div").html(get_thumbs_html());
+  });
+  $("#imgs_div").html(get_thumbs_html());
+
+  $(".thumbs").on("click", function()
+  {
+    console.log(this.id);
+    image_url=$("#"+this.id).attr('src');
+    txt_url="";
+    if (image_url.indexOf(".jpg") > -1) {
+       txt_url = image_url.replace('.jpg','.txt' );
+    }else{
+       //nothing yet
+    }
+    //print filename.
+    $("#pic_info").html(image_url.split("/").slice(-1)[0]);
+    load_big_image(image_url); 
+    $.get(txt_url, function(data) {
+      var _data=data.replace(emptylinesRe,"");
+      //$("#mark_box").html(_data);
+      
+      lines=_data.split("\n");
+        for(var i=0; i<lines.length; i++){
+          if(lines[i].length>10){ //throw malformed away
+            process_data_line(lines[i]);
           }
-          draw_rects();
-      }).fail(function(){ //no txt file found, clear all info.
-        $("#mark_box").html("");
-        $("#infobox").html("");
-      });
-    });
-
-
-    function load_big_image(url) {
-      imageObj = new Image();
-      ctx.clearRect(0, 0, canvas_w, canvas_h);
-      imageObj.onload = function () { 
-        ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
-      };
-      imageObj.src = url;
-      canvas.addEventListener('mousedown', mouseDown, false);
-      canvas.addEventListener('mouseup', mouseUp, false);
-      canvas.addEventListener('mousemove', mouseMove, false);
-      rects=[]; //clear existing drawing.
-      curr_rect_idx=0;
-    }
-
-    function mouseDown(e) {
-      var rect={};
-      rect.startX = e.pageX - this.offsetLeft;
-      rect.startY = e.pageY - this.offsetTop;
-      rect.strokeStyle='red';
-      rects.push(rect);
-      rects[rects.length-1].cat="x"+(rects.length-1).pad(3);
-      drag = true;
-    }
-
-    function mouseUp() { 
-      drag = false; 
-    }
-
-    function process_data_line(line){
-      //TODO darw cat different color
-      var elems=line.split(" ");
-      if(elems.length<=5){
-        return;
-      }
-      rect={};
-      rect.cat=elems[0];
-      rect.x=elems[1];
-      rect.y=elems[2];
-      rect.w=elems[3];
-      rect.h=elems[4];
-      rect.strokeStyle="blue";
-      rects.push(rect);
-    }
-
-    function draw_rects(){
-      txt.innerHTML="";
-      for(i=0; i<rects.length; i++){
-        draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
-        txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
-      }
-    }
-
-    function mouseMove(e) {
-      if (drag) {
-        var rect=rects[rects.length-1];
-        ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
-        rect.w = (e.pageX - this.offsetLeft - rect.startX)/canvas_w;
-        rect.h = (e.pageY - this.offsetTop - rect.startY)/canvas_h;
-        rect.x = rect.startX/canvas_w + rect.w/2;
-        rect.y = rect.startY/canvas_h + rect.h/2;
+        }
         draw_rects();
-      }
+    }).fail(function(){ //no txt file found, clear all info.
+      //$("#mark_box").html("");
+      $("#infobox").html("");
+    });
+  });
+
+
+  function load_big_image(url) {
+    imageObj = new Image();
+    ctx.clearRect(0, 0, canvas_w, canvas_h);
+    imageObj.onload = function () { 
+      ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
+    };
+    imageObj.src = url;
+    canvas.addEventListener('mousedown', mouseDown, false);
+    canvas.addEventListener('mouseup', mouseUp, false);
+    canvas.addEventListener('mousemove', mouseMove, false);
+    rects=[]; //clear existing drawing.
+    curr_rect_idx=0;
+  }
+
+  function mouseDown(e) {
+    var rect={};
+    rect.startX = e.pageX - this.offsetLeft;
+    rect.startY = e.pageY - this.offsetTop;
+    rect.strokeStyle='red';
+    rects.push(rect);
+    rects[rects.length-1].cat="x"+(rects.length-1).pad(3);
+    drag = true;
+  }
+
+  function mouseUp() { 
+    drag = false; 
+  }
+
+  function process_data_line(line){
+    //TODO darw cat different color
+    var elems=line.split(" ");
+    if(elems.length<=5){
+      return;
     }
+    rect={};
+    rect.cat=elems[0];
+    rect.x=elems[1];
+    rect.y=elems[2];
+    rect.w=elems[3];
+    rect.h=elems[4];
+    rect.strokeStyle="blue";
+    rects.push(rect);
+  }
+
+  function draw_rects(){
+    txt.innerHTML="";
+    for(i=0; i<rects.length; i++){
+      draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
+      txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
+    }
+  }
+
+  function mouseMove(e) {
+    if (drag) {
+      var rect=rects[rects.length-1];
+      ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
+      rect.w = (e.pageX - this.offsetLeft - rect.startX)/canvas_w;
+      rect.h = (e.pageY - this.offsetTop - rect.startY)/canvas_h;
+      rect.x = rect.startX/canvas_w + rect.w/2;
+      rect.y = rect.startY/canvas_h + rect.h/2;
+      draw_rects();
+    }
+  }
 }, 'text');
 
 </script>
@@ -187,19 +211,29 @@ $.get('/static/files.txt', function(data) {
         <div id="canvas_div" class="canvas0">
           <canvas id="canvas" width="600" height="600"></canvas>
         </div>  
+        <div id="page_sel_div">
+          <div class="controls form-inline">
+            <form>
+              <button type="button" class="btn btn-primary"><-</button>
+              <input id="page_idx" type="text" class="form-control" placeholder="Page Index">
+              <button type="button" class="btn btn-success">GO</button>
+              <button type="button" class="btn btn-primary">-></button>
+              <button type="button" class="btn btn-warning">UP</button>
+              <button type="button" class="btn btn-warning">DN</button>
+            </form>
+          </div>
+        </div>
         <div id="imgs_div" class="images">
-          
-            <img src="" alt="">
-          
+          <img src="" alt="">
         </div>
       </div>
 
       <div class="split right">
         <div class="centered">
           <p id="pic_info">info</p>
-          <pre>
-            <p id="mark_box">EMPTY</p>
-          </pre>
+          <!--<pre>
+            <p display="none" id="mark_box">EMPTY</p>
+          </pre>-->
           <pre>
           <p id="infobox">Output Box.</p>
           </pre>
