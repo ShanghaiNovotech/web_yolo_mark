@@ -10,6 +10,8 @@ Demo App
     
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script src="/static/md5.min.js"></script>
 <script src="/static/jquery.cookie.js"></script>
 
 <script>
@@ -35,6 +37,11 @@ function draw_rect(name,x,y,w,h,strokeStyle){
   ctx.strokeRect((x-w/2)*canvas_w, (y-h/2)*canvas_h, w*canvas_w, h*canvas_h);
   ctx.fillStyle = strokeStyle;
   ctx.fillText(name, (x-w/2)*canvas_w+5, (y-h/2)*canvas_w+15);
+}
+
+function toColor(num) {
+  var salt="c2h2"
+  return "#" + md5(salt+num).substr(-6, 6);
 }
 
 Number.prototype.pad = function(size) {
@@ -197,7 +204,6 @@ $.get('/static/files.txt', function(data) {
   }
 
   function process_data_line(line){
-    //TODO darw cat different color
     var elems=line.split(" ");
     if(elems.length<=5){
       return;
@@ -208,7 +214,7 @@ $.get('/static/files.txt', function(data) {
     rect.y=elems[2];
     rect.w=elems[3];
     rect.h=elems[4];
-    rect.strokeStyle="blue";
+    rect.strokeStyle=toColor(rect.cat);
     rects.push(rect);
   }
 
