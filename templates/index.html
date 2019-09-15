@@ -24,16 +24,23 @@ var urls = "";
 var ctx = null; 
 var canvas_w=500;
 var canvas_h=500;
+var emptylinesRe = /^[ \r\n]+$/gi;
 
-function process_data_line(line){
-  //TODO darw cat different color
-  var elems=line.split(" ");
-  draw_rect(elems[1],elems[2],elems[3],elems[4],"orange");
-}
+
 
 function draw_rect(x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
   ctx.strokeRect((x-w/2)*canvas_w, (y-h/2)*canvas_h, w*canvas_w, h*canvas_h);
+}
+
+function add_rect(){
+
+}
+
+Number.prototype.pad = function(size) {
+    var s = String(this);
+    while (s.length < (size || 2)) {s = "0" + s;}
+    return s;
 }
 
 $.get('/static/files.txt', function(data) {
@@ -67,42 +74,45 @@ $.get('/static/files.txt', function(data) {
       console.log(txt_url);
       load_big_image(image_url); 
       $.get(txt_url, function(data) {
+        var _data=data.replace(emptylinesRe,"");
+        $("#mark_box").html(_data);
+        //$("#infobox").html(_data);
         
-        $("#mark_box").html(data);
-        $("#infobox").html(data);
-        
-        lines=data.split("\n");
+        lines=_data.split("\n");
           for(var i=0; i<lines.length; i++){
-            process_data_line(lines[i]);
+            if(lines[i].length>10){ //throw malformed away
+              process_data_line(lines[i]);
+            }
           }
+          console.log(rects);
+          console.log(curr_rect_idx);
+          draw_rects();
       }).fail(function(){ //no txt file found, clear all info.
         $("#mark_box").html("");
         $("#infobox").html("");
       });
     });
-  
-
 
 
     function load_big_image(url) {
-        imageObj = new Image();
-        ctx.clearRect(0, 0, canvas_w, canvas_h);
-        imageObj.onload = function () { 
-          ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
-        };
-        imageObj.src = url;
-        canvas.addEventListener('mousedown', mouseDown, false);
-        canvas.addEventListener('mouseup', mouseUp, false);
-        canvas.addEventListener('mousemove', mouseMove, false);
-        rects=[]; //TODO clear existing drawing.
+      imageObj = new Image();
+      ctx.clearRect(0, 0, canvas_w, canvas_h);
+      imageObj.onload = function () { 
+        ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
+      };
+      imageObj.src = url;
+      canvas.addEventListener('mousedown', mouseDown, false);
+      canvas.addEventListener('mouseup', mouseUp, false);
+      canvas.addEventListener('mousemove', mouseMove, false);
+      rects=[]; //clear existing drawing.
     }
 
     function mouseDown(e) {
-        var rect={};
-        rect.startX = e.pageX - this.offsetLeft;
-        rect.startY = e.pageY - this.offsetTop;
-        rects[curr_rect_idx]=rect;
-        drag = true;
+      var rect={};
+      rect.startX = e.pageX - this.offsetLeft;
+      rect.startY = e.pageY - this.offsetTop;
+      rects[curr_rect_idx]=rect;
+      drag = true;
     }
 
     function mouseUp() { 
@@ -110,22 +120,41 @@ $.get('/static/files.txt', function(data) {
       curr_rect_idx++;
     }
 
+    function process_data_line(line){
+      //TODO darw cat different color
+      var elems=line.split(" ");
+      if(elems.length<=5){
+        return;
+      }
+      rect={};
+      rect.cat=elems[0];
+      rect.x=elems[1];
+      rect.y=elems[2];
+      rect.w=elems[3];
+      rect.h=elems[4];
+      rect.strokeStyle="blue";
+      rects.push(rect);
+      curr_rect_idx++;
+    }
+
+    function draw_rects(){
+      txt.innerHTML="";
+      for(i=0; i<rects.length; i++){
+        draw_rect(rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
+        txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
+      }
+    }
+
     function mouseMove(e) {
         if (drag) {
-            //ctx.clearRect(0, 0, 500, 500);
             ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
-            rects[curr_rect_idx].w = (e.pageX - this.offsetLeft) - rects[curr_rect_idx].startX;
-            rects[curr_rect_idx].h = (e.pageY - this.offsetTop) - rects[curr_rect_idx].startY;
+            rects[curr_rect_idx].w = ((e.pageX - this.offsetLeft) - rects[curr_rect_idx].startX)/canvas_w;
+            rects[curr_rect_idx].h = ((e.pageY - this.offsetTop) - rects[curr_rect_idx].startY)/canvas_h;
+            rects[curr_rect_idx].x = rects[curr_rect_idx].startX/canvas_w + rects[curr_rect_idx].w/2;
+            rects[curr_rect_idx].y = rects[curr_rect_idx].startY/canvas_h + rects[curr_rect_idx].h/2;
             rects[curr_rect_idx].strokeStyle='red';
-            txt.innerHTML="";
-            for(i=0; i<=curr_rect_idx; i++){
-              var w=rects[i].w/canvas_w;
-              var h=rects[i].h/canvas_h
-              var x=rects[i].startX/canvas_w + w/2;
-              var y=rects[i].startY/canvas_h + h/2;
-              draw_rect(x,y,w,h,rects[i].strokeStyle);
-              txt.innerHTML+= "x " + x.toFixed(6)+" "+ y.toFixed(6) +" " + Math.abs(w.toFixed(6)) + " " + Math.abs(h.toFixed(6)) +"\n" ;
-            }
+            rects[curr_rect_idx].cat="x"+curr_rect_idx.pad(3);
+            draw_rects();
         }
     }
 }, 'text');
