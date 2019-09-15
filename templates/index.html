@@ -22,19 +22,16 @@ h=height of the bbox
 */
 var urls = "";
 var ctx = null; 
-var canvas_w=500;
-var canvas_h=500;
+var canvas_w=600;
+var canvas_h=600;
 var emptylinesRe = /^[ \r\n]+$/gi;
 
 
-
-function draw_rect(x,y,w,h,strokeStyle){
+function draw_rect(name,x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
   ctx.strokeRect((x-w/2)*canvas_w, (y-h/2)*canvas_h, w*canvas_w, h*canvas_h);
-}
-
-function add_rect(){
-
+  ctx.fillStyle = strokeStyle;
+  ctx.fillText(name, (x-w/2)*canvas_w+5, (y-h/2)*canvas_w+15);
 }
 
 Number.prototype.pad = function(size) {
@@ -44,17 +41,20 @@ Number.prototype.pad = function(size) {
 }
 
 $.get('/static/files.txt', function(data) {
+  $("#canvas").width(canvas_w);
+  $("#canvas").height(canvas_h);
   urls=data;
   elems=urls.split("\n");
   innerhtml="";
   var canvas = document.getElementById('canvas');
   var txt= document.getElementById('infobox');
   ctx = canvas.getContext('2d');
+  ctx.font = "12px Arial";
+  ctx.lineWidth = 2;
   var rect = {};
   var rects =[];
   var drag = false;
   var imageObj = null;
-  var curr_rect_idx=0;
 
    for(i=0; i<20; i++){//pagnation TODO
      innerhtml+="<img class='thumbs' width=60 height=60 id='img"+i+"' src='"+elems[i]+"'>";
@@ -84,8 +84,6 @@ $.get('/static/files.txt', function(data) {
               process_data_line(lines[i]);
             }
           }
-          console.log(rects);
-          console.log(curr_rect_idx);
           draw_rects();
       }).fail(function(){ //no txt file found, clear all info.
         $("#mark_box").html("");
@@ -105,19 +103,21 @@ $.get('/static/files.txt', function(data) {
       canvas.addEventListener('mouseup', mouseUp, false);
       canvas.addEventListener('mousemove', mouseMove, false);
       rects=[]; //clear existing drawing.
+      curr_rect_idx=0;
     }
 
     function mouseDown(e) {
       var rect={};
       rect.startX = e.pageX - this.offsetLeft;
       rect.startY = e.pageY - this.offsetTop;
-      rects[curr_rect_idx]=rect;
+      rect.strokeStyle='red';
+      rects.push(rect);
+      rects[rects.length-1].cat="x"+(rects.length-1).pad(3);
       drag = true;
     }
 
     function mouseUp() { 
       drag = false; 
-      curr_rect_idx++;
     }
 
     function process_data_line(line){
@@ -134,28 +134,26 @@ $.get('/static/files.txt', function(data) {
       rect.h=elems[4];
       rect.strokeStyle="blue";
       rects.push(rect);
-      curr_rect_idx++;
     }
 
     function draw_rects(){
       txt.innerHTML="";
       for(i=0; i<rects.length; i++){
-        draw_rect(rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
+        draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
         txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
       }
     }
 
     function mouseMove(e) {
-        if (drag) {
-            ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
-            rects[curr_rect_idx].w = ((e.pageX - this.offsetLeft) - rects[curr_rect_idx].startX)/canvas_w;
-            rects[curr_rect_idx].h = ((e.pageY - this.offsetTop) - rects[curr_rect_idx].startY)/canvas_h;
-            rects[curr_rect_idx].x = rects[curr_rect_idx].startX/canvas_w + rects[curr_rect_idx].w/2;
-            rects[curr_rect_idx].y = rects[curr_rect_idx].startY/canvas_h + rects[curr_rect_idx].h/2;
-            rects[curr_rect_idx].strokeStyle='red';
-            rects[curr_rect_idx].cat="x"+curr_rect_idx.pad(3);
-            draw_rects();
-        }
+      if (drag) {
+        var rect=rects[rects.length-1];
+        ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
+        rect.w = (e.pageX - this.offsetLeft - rect.startX)/canvas_w;
+        rect.h = (e.pageY - this.offsetTop - rect.startY)/canvas_h;
+        rect.x = rect.startX/canvas_w + rect.w/2;
+        rect.y = rect.startY/canvas_h + rect.h/2;
+        draw_rects();
+      }
     }
 }, 'text');
 
@@ -187,7 +185,7 @@ $.get('/static/files.txt', function(data) {
     <div class="container">
       <div class="split left">
         <div id="canvas_div" class="canvas0">
-          <canvas id="canvas" width="500" height="500"></canvas>
+          <canvas id="canvas" width="600" height="600"></canvas>
         </div>  
         <div id="imgs_div" class="images">
           
