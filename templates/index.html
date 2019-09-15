@@ -27,6 +27,7 @@ var ctx = null;
 var canvas_w=600;
 var canvas_h=600;
 var emptylinesRe = /^[ \r\n]+$/gi;
+var image_id=null;
 
 
 function draw_rect(name,x,y,w,h,strokeStyle){
@@ -58,6 +59,8 @@ $.get('/static/files.txt', function(data) {
   var imageObj = null;
   var page_idx = null;
   var per_page = 25;
+  var pic_start_idx=null;
+  var pic_end_idx=null;
 
   function get_thumbs_html(){
     if(page_idx==null){
@@ -69,25 +72,74 @@ $.get('/static/files.txt', function(data) {
       }
     }
     $("#page_idx").val(page_idx);
+
     var innerhtml="";
     for(i=0; i<per_page; i++){
       var img_idx = i + page_idx * per_page;
-      innerhtml+="<img class='thumbs' width=50 height=50 id='img"+(img_idx)+"' src='"+elems[img_idx]+"'>";
+      innerhtml+="<img class='thumbs' width=50 height=50 id='img_"+(img_idx)+"' src='"+elems[img_idx]+"'>";
     }
+
+    pic_start_idx = page_idx * per_page;
+    pic_end_idx = (parseInt(page_idx)+1) * per_page - 1 ;
     return innerhtml;
   }
 
-  $("#page_idx").val(page_idx);
   $("#page_idx").change(function() {
     page_idx=$("#page_idx").val();
     _cookie('page_idx_cookie', page_idx, { expires: 365, path: '/' });
     $("#imgs_div").html(get_thumbs_html());
   });
+
+
+  $("#page_next").on("click", function(){
+    page_idx++;
+    $("#page_idx").val(page_idx);
+    $("#page_idx" ).trigger( "change" );
+  });
+
+  $("#page_prev").on("click", function(){
+    page_idx--; 
+    if(page_idx<0){
+      page_idx=0;
+    }
+    $("#page_idx").val(page_idx);
+    $("#page_idx" ).trigger( "change" );
+  });
+
+  $("#pic_prev").on("click", function(){
+    var num = parseInt(image_id.split("_")[1])-1;
+    if(num>0){
+      $("#img_"+num ).trigger( "click" );
+    }else{
+      alert("Already the first image");
+    }
+
+    if(num<pic_start_idx){
+      page_idx--;
+      $("#page_idx").val(page_idx);
+      $("#page_idx" ).trigger( "change" );
+    }
+  });
+
+  $("#pic_next").on("click", function(){
+    var num = parseInt(image_id.split("_")[1])+1;
+    if(num>0){
+      $("#img_"+num ).trigger( "click" );
+    }else{
+      alert("Already the first image");
+    }
+    if(num>pic_end_idx){
+      page_idx++;
+      $("#page_idx").val(page_idx);
+      $("#page_idx" ).trigger( "change" );
+    }
+  });
+
+
   $("#imgs_div").html(get_thumbs_html());
 
-  $(".thumbs").on("click", function()
-  {
-    console.log(this.id);
+  $(".thumbs").on("click", function(){
+    image_id=this.id;
     image_url=$("#"+this.id).attr('src');
     txt_url="";
     if (image_url.indexOf(".jpg") > -1) {
@@ -214,12 +266,11 @@ $.get('/static/files.txt', function(data) {
         <div id="page_sel_div">
           <div class="controls form-inline">
             <form>
-              <button type="button" class="btn btn-primary"><-</button>
+              <button id="pic_prev" type="button" class="btn btn-primary"><-</button>
               <input id="page_idx" type="text" class="form-control" placeholder="Page Index">
-              <button type="button" class="btn btn-success">GO</button>
-              <button type="button" class="btn btn-primary">-></button>
-              <button type="button" class="btn btn-warning">UP</button>
-              <button type="button" class="btn btn-warning">DN</button>
+              <button id="pic_next" type="button" class="btn btn-primary">-></button>
+              <button id="page_prev" type="button" class="btn btn-warning">UP</button>
+              <button id="page_next" type="button" class="btn btn-warning">DN</button>
             </form>
           </div>
         </div>
