@@ -26,6 +26,22 @@ def index_post():
     return "200 OK"
 
 
+@app.route('/', methods=['DELETE'])
+def index_del():
+    data_ = request.get_data(as_text=True)
+    data = data_.split("\n")
+    txt = data[0].replace(".jpg",'.txt')
+    line = int(data[1])
+    content = []
+    with open(txt, 'r') as f:
+        content = f.readlines()
+        del(content[line])
+        
+    with open(txt, 'w') as f:
+        f.writelines(content)
+
+    return "200 OK"
+
 @app.route('/login')
 def login():
     return render_template('login.html')

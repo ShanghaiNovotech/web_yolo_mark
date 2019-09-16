@@ -30,11 +30,14 @@ var canvas_w=600;
 var canvas_h=600;
 var emptylinesRe = /^[ \r\n]+$/gi;
 var image_id=null;
+var curr_img = null;
+var category = new Array();
 
-function draw_rect(name,x,y,w,h,strokeStyle){
+function draw_rect(cat_id,x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
   ctx.strokeRect((x-w/2)*canvas_w, (y-h/2)*canvas_h, w*canvas_w, h*canvas_h);
   ctx.fillStyle = strokeStyle;
+  name = category[parseInt(cat_id)];
   ctx.fillText(name, (x-w/2)*canvas_w+5, (y-h/2)*canvas_w+15);
 }
 
@@ -44,10 +47,27 @@ function toColor(num) {
 }
 
 Number.prototype.pad = function(size) {
-    var s = String(this);
-    while (s.length < (size || 2)) {s = "0" + s;}
-    return s;
+  var s = String(this);
+  while (s.length < (size || 2)) {s = "0" + s;}
+  return s;
 }
+
+$(function(){
+  $("#marks").on("click", ".category_select a", function(){
+	$.ajax({
+    url:'/',
+    type:'DELETE',
+    data:curr_img + "\n" + $(this).attr("id"),
+  })
+
+  $(this).parent().remove();
+	});;
+}); // document.ready
+
+
+$.get('/static/coco.names', function(data){
+  category = data.split("\n");
+});
 
 $.get('/static/files.txt', function(data) {
   $("#canvas").width(canvas_w);
@@ -67,7 +87,7 @@ $.get('/static/files.txt', function(data) {
   var per_page = 25;
   var pic_start_idx=null;
   var pic_end_idx=null;
-  var curr_img = null;
+
   function get_thumbs_html(){
     if(page_idx==null){
       if(typeof _cookie('page_idx_cookie') !== 'undefined'){
@@ -167,6 +187,7 @@ $.get('/static/files.txt', function(data) {
           }
         }
         draw_rects();
+        draw_marks();
     }).fail(function(){ //no txt file found, clear all info.
       //$("#mark_box").html("");
       $("#infobox").html("");
@@ -224,25 +245,49 @@ $.get('/static/files.txt', function(data) {
 
   function draw_rects(){
     txt.innerHTML="";
-    for(i=0; i<rects.length; i++){
+    for(var i=0; i<rects.length; i++){
       draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
       txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
     }
     $("#infobox").change();
   }
 
+  function draw_marks(){
+  	var select_controls = "";
+  	for(var i=0; i<rects.length; i++){
+  		var select_control = "<div class='category_select'><select>" 
+  		for(var j = 0; j < category.length; j++) {
+  			var cat_i = parseInt(rects[i].cat);
+  			if(cat_i == j) {
+  				select_control = select_control + "<option selected" + " value=" + j + ">" + category[j] + "</option>";
+  			} else {
+  				select_control = select_control + "<option value=" + j + ">" + category[j] + "</option>";
+  			}
+  		}
+  		select_control = select_control + '</select><a href="#" class="del" '+ "id="+ i+'>X</a></div>';
+  		select_controls = select_controls + select_control;
+	}
+  	
+
+	$("#marks").html(select_controls);
+  }
+
   function mouseMove(e) {
     if (drag) {
       var rect=rects[rects.length-1];
       ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
+      rect.cat = 0;
       rect.w = (e.pageX - this.offsetLeft - rect.startX)/canvas_w;
       rect.h = (e.pageY - this.offsetTop - rect.startY)/canvas_h;
       rect.x = rect.startX/canvas_w + rect.w/2;
       rect.y = rect.startY/canvas_h + rect.h/2;
       draw_rects();
+      draw_marks();
+      console.log(rect);
     }
   }
 }, 'text');
+
 
 </script>
 {% endblock %}
@@ -292,8 +337,8 @@ $.get('/static/files.txt', function(data) {
 
       <div class="split right">
         <div class="centered">
-            <select><option>1</option></select>
-
+        	<div id="marks">
+        	</div>
           <p id="pic_info">info</p>
           <!--<pre>
             <p display="none" id="mark_box">EMPTY</p>
