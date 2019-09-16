@@ -31,7 +31,6 @@ var canvas_h=600;
 var emptylinesRe = /^[ \r\n]+$/gi;
 var image_id=null;
 
-
 function draw_rect(name,x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
   ctx.strokeRect((x-w/2)*canvas_w, (y-h/2)*canvas_h, w*canvas_w, h*canvas_h);
@@ -68,7 +67,7 @@ $.get('/static/files.txt', function(data) {
   var per_page = 25;
   var pic_start_idx=null;
   var pic_end_idx=null;
-
+  var curr_img = null;
   function get_thumbs_html(){
     if(page_idx==null){
       if(typeof _cookie('page_idx_cookie') !== 'undefined'){
@@ -142,22 +141,21 @@ $.get('/static/files.txt', function(data) {
     }
   });
 
-
   $("#imgs_div").html(get_thumbs_html());
 
   $("#imgs_div").on("click", "img.thumbs", function(){
-	  console.log("on click");
     image_id=this.id;
     image_url=$("#"+this.id).attr('src');
     txt_url="";
     if (image_url.indexOf(".jpg") > -1) {
-       txt_url = image_url.replace('.jpg','.txt' );
+       txt_url = image_url.replace('.jpg','.txt' )+"?"+Math.random();
     }else{
        //nothing yet
     }
     //print filename.
     $("#pic_info").html(image_url.split("/").slice(-1)[0]);
-    load_big_image(image_url); 
+    load_big_image(image_url);
+    curr_img = image_url;
     $.get(txt_url, function(data) {
       var _data=data.replace(emptylinesRe,"");
       //$("#mark_box").html(_data);
@@ -201,12 +199,17 @@ $.get('/static/files.txt', function(data) {
   }
 
   function mouseUp() { 
-    drag = false; 
+    drag = false;
+    $.ajax({
+      type: "POST",
+      url: "/",
+      data: curr_img +$("#infobox").html(),
+    });
   }
 
   function process_data_line(line){
     var elems=line.split(" ");
-    if(elems.length<=5){
+    if(elems.length<5){
       return;
     }
     rect={};
@@ -225,6 +228,7 @@ $.get('/static/files.txt', function(data) {
       draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
       txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
     }
+    $("#infobox").change();
   }
 
   function mouseMove(e) {
@@ -288,6 +292,8 @@ $.get('/static/files.txt', function(data) {
 
       <div class="split right">
         <div class="centered">
+            <select><option>1</option></select>
+
           <p id="pic_info">info</p>
           <!--<pre>
             <p display="none" id="mark_box">EMPTY</p>
