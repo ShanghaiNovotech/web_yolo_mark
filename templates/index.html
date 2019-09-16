@@ -145,7 +145,8 @@ $.get('/static/files.txt', function(data) {
 
   $("#imgs_div").html(get_thumbs_html());
 
-  $(".thumbs").on("click", function(){
+  $("#imgs_div").on("click", "img.thumbs", function(){
+	  console.log("on click");
     image_id=this.id;
     image_url=$("#"+this.id).attr('src');
     txt_url="";
