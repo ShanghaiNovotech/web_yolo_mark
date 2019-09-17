@@ -31,7 +31,7 @@ var canvas_h=600;
 var emptylinesRe = /^[ \r\n]+$/gi;
 var image_id=null;
 var curr_img = null;
-var category = new Array();
+var category = [];
 
 function draw_rect(cat_id,x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
@@ -53,6 +53,12 @@ Number.prototype.pad = function(size) {
 }
 
 $(function(){
+
+  // Load categories from server
+  $.get('/static/coco.names', function(data) {
+    category = data.split("\n");
+  });
+
   $("#marks").on("click", ".category_select a", function(){
 	$.ajax({
     url:'/',
@@ -63,11 +69,6 @@ $(function(){
   $(this).parent().remove();
 	});;
 }); // document.ready
-
-
-$.get('/static/coco.names', function(data){
-  category = data.split("\n");
-});
 
 $.get('/static/files.txt', function(data) {
   $("#canvas").width(canvas_w);
