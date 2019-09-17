@@ -26,8 +26,8 @@ h=height of the bbox
 var _cookie = $.cookie;
 var urls = "";
 var ctx = null; 
-var canvas_w=600;
-var canvas_h=600;
+var canvas_w = 600;
+var canvas_h = 600;
 var emptylinesRe = /^[ \r\n]+$/gi;
 var image_id=null;
 var curr_img = null;
@@ -54,6 +54,9 @@ Number.prototype.pad = function(size) {
 
 $(function(){
 
+  $("#canvas").width(canvas_w);
+  $("#canvas").height(canvas_h);
+
   // Load categories from server
   $.get('/static/coco.names', function(data) {
     category = data.split("\n");
@@ -71,8 +74,6 @@ $(function(){
 }); // document.ready
 
 $.get('/static/files.txt', function(data) {
-  $("#canvas").width(canvas_w);
-  $("#canvas").height(canvas_h);
   urls=data;
   elems=urls.split("\n");
   var canvas = document.getElementById('canvas');
