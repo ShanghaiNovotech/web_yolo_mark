@@ -37,8 +37,17 @@ function draw_rect(cat_id,x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
   ctx.strokeRect((x-w/2)*canvas_w, (y-h/2)*canvas_h, w*canvas_w, h*canvas_h);
   ctx.fillStyle = strokeStyle;
-  name = category[parseInt(cat_id)];
-  ctx.fillText(name, (x-w/2)*canvas_w+5, (y-h/2)*canvas_w+15);
+  
+  var category_name = "";
+  for(var i = 0; i < category.length; i++) {
+    var category_o = category[i];
+    if(category_o.id == parseInt(cat_id)) {
+      category_name = category_o.name;
+      break;
+    }
+  }
+
+  ctx.fillText(category_name, (x-w/2)*canvas_w+5, (y-h/2)*canvas_w+15);
 }
 
 function toColor(num) {
@@ -59,7 +68,11 @@ $(function(){
 
   // Load categories from server
   $.get('/static/coco.names', function(data) {
-    category = data.split("\n");
+    var lines = data.split("\n");
+    for(var i = 0; i < lines.length; i++) {
+      category.push({id: i, name: lines[i]});  
+    }
+    console.log("Defined categories", category);
   });
 
   $("#marks").on("click", ".category_select a", function(){
@@ -260,13 +273,14 @@ $.get('/static/files.txt', function(data) {
   		var select_control = "<div class='category_select'><select>" 
   		for(var j = 0; j < category.length; j++) {
   			var cat_i = parseInt(rects[i].cat);
-  			if(cat_i == j) {
-  				select_control = select_control + "<option selected" + " value=" + j + ">" + category[j] + "</option>";
-  			} else {
-  				select_control = select_control + "<option value=" + j + ">" + category[j] + "</option>";
-  			}
+        var category_o = category[j];
+        if(category_o.id == cat_i) {
+          select_control = select_control + "<option selected" + " value=" + category_o.id + ">" + category_o.name + "</option>";
+        } else {
+          select_control = select_control + "<option value=" + category_o.id + ">" + category_o.name + "</option>";
+        }
   		}
-  		select_control = select_control + '</select><a href="#" class="del" '+ "id="+ i+'>X</a></div>';
+  		select_control = select_control + '</select><a href="#" class="del" '+ "id="+ i +'>X</a></div>';
   		select_controls = select_controls + select_control;
 	}
   	
