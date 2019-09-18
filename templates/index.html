@@ -87,8 +87,6 @@ $(function(){
     // TODO: Clear rect in canvas.
   });
 
-  
-
   $("#marks").on("change", ".category_select select", function(){
     var category_id = $(this).val();
     console.log("Selected category", category_id);
@@ -294,10 +292,11 @@ $.get('/static/files.txt', function(data) {
 
   function draw_marks(){
   	var select_controls = "";
-  	for(var i=0; i<rects.length; i++){
-  		var select_control = "<div class='category_select'><select>" 
+  	for(var i = 0; i < rects.length; i++) {
+      var rect_o = rects[i];
+  		var select_control = "<div class='category_select' data-x='" + rect_o.x + "' data-y='" + rect_o.y + "' data-w='" + rect_o.w + "' data-h='" + rect_o.h + "'><select>" 
   		for(var j = 0; j < category.length; j++) {
-  			var cat_i = parseInt(rects[i].cat);
+  			var cat_i = parseInt(rect_o.cat);
         var category_o = category[j];
         if(category_o.id == cat_i) {
           select_control = select_control + "<option selected" + " value=" + category_o.id + ">" + category_o.name + "</option>";
