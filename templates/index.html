@@ -189,32 +189,34 @@ $.get('/static/files.txt', function(data) {
     }
     //print filename.
     $("#pic_info").html(image_url.split("/").slice(-1)[0]);
-    load_big_image(image_url);
-    curr_img = image_url;
-    $.get(txt_url, function(data) {
-      var _data=data.replace(emptylinesRe,"");
-      //$("#mark_box").html(_data);
-      
-      lines=_data.split("\n");
-        for(var i=0; i<lines.length; i++){
-          if(lines[i].length>10){ //throw malformed away
-            process_data_line(lines[i]);
+    load_big_image(image_url, function(){
+      curr_img = image_url;
+      $.get(txt_url, function(data) {
+        var _data=data.replace(emptylinesRe,"");
+        //$("#mark_box").html(_data);
+        
+        lines=_data.split("\n");
+          for(var i=0; i<lines.length; i++){
+            if(lines[i].length>10){ //throw malformed away
+              process_data_line(lines[i]);
+            }
           }
-        }
-        draw_rects();
-        draw_marks();
-    }).fail(function(){ //no txt file found, clear all info.
-      //$("#mark_box").html("");
-      $("#infobox").html("");
-    });
+          draw_rects();
+          draw_marks();
+      }).fail(function(){ //no txt file found, clear all info.
+        //$("#mark_box").html("");
+        $("#infobox").html("");
+      }); // end $.get
+    }); // load_big_image
   });
 
 
-  function load_big_image(url) {
+  function load_big_image(url, callback_fn) {
     imageObj = new Image();
     ctx.clearRect(0, 0, canvas_w, canvas_h);
     imageObj.onload = function () { 
       ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height); //resize to canvas size.
+      callback_fn();
     };
     imageObj.src = url;
     canvas.addEventListener('mousedown', mouseDown, false);
