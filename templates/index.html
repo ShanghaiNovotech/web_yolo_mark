@@ -272,11 +272,12 @@ $.get('/static/files.txt', function(data) {
   }
 
   function draw_rects(){
-    txt.innerHTML="";
+    var html_frag = "";
     for(var i=0; i<rects.length; i++){
       draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
-      txt.innerHTML+= rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
+      html_frag += rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
     }
+    txt.innerHTML = html_frag;
     $("#infobox").change();
   }
 
