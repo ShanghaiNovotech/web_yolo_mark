@@ -76,13 +76,18 @@ $(function(){
   });
 
   $("#marks").on("click", ".category_select a", function(){
+    var _this = this;
 	$.ajax({
     url:'/',
     type:'DELETE',
     data:curr_img + "\n" + $(this).attr("id"),
-  })
+  }).done(function(){
+    console.log("Category mark deleted.");
+    $(_this).parent().remove();
+    // TODO: Clear rect in canvas.
+  });
 
-  $(this).parent().remove();
+  
 
   $("#marks").on("change", ".category_select select", function(){
     var category_id = $(this).val();
