@@ -148,6 +148,10 @@ $.get('/static/files.txt', function(data) {
   });
 
   $("#pic_prev").on("click", function(){
+    if(image_id == null) {
+      alert("Please select one image first!");
+      return;
+    }
     var num = parseInt(image_id.split("_")[1])-1;
     if(num>0){
       $("#img_"+num ).trigger( "click" );
@@ -163,6 +167,10 @@ $.get('/static/files.txt', function(data) {
   });
 
   $("#pic_next").on("click", function(){
+    if(image_id == null) {
+      alert("Please select one image first!");
+      return;
+    }
     var num = parseInt(image_id.split("_")[1])+1;
     if(num>0){
       $("#img_"+num ).trigger( "click" );
