@@ -83,6 +83,12 @@ $(function(){
   })
 
   $(this).parent().remove();
+
+  $("#marks").on("change", ".category_select select", function(){
+    var category_id = $(this).val();
+    console.log("Selected category", category_id);
+    // TOOD, sync to server
+  });
 	});;
 }); // document.ready
 
