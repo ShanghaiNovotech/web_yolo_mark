@@ -201,6 +201,7 @@ $.get('/static/files.txt', function(data) {
     $("#pic_info").html(image_url.split("/").slice(-1)[0]);
     load_big_image(image_url, function(){
       curr_img = image_url;
+      $("#pic_info_link").attr("href", image_url);
       $.get(txt_url, function(data) {
         var _data=data.replace(emptylinesRe,"");
         //$("#mark_box").html(_data);
@@ -365,6 +366,7 @@ $.get('/static/files.txt', function(data) {
 
       <div class="split right">
         <div class="properties_bar">
+          <a id="pic_info_link" href="" target="_blank" class="btn btn-info btn-sm pull-right">View</a>
           <p id="pic_info">info</p>
           <div id="marks"></div>
           <!--<pre>
