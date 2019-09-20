@@ -35,7 +35,21 @@ var category = [];
 var rects =[];
 var txt; //= document.getElementById('infobox');
 var imageObj = null;
+var old_infobox_data=null;
 
+function upload_infobox(){
+  new_infobox_data=$("#infobox").html();
+  if(old_infobox_data==new_infobox_data){
+    return;
+  }
+  old_infobox_data=new_infobox_data;  
+  console.log("uploading");
+  $.ajax({
+    type: "POST",
+    url: "/",
+    data: curr_img + new_infobox_data,
+  });
+}
 
 function draw_rects_and_infobox(){
   var html_frag = "";
@@ -129,25 +143,28 @@ $(function(){
 
   $("#marks").on("change", ".category_select select", function(){
     var category_id = $(this).val();
+    var i=parseInt($(this).parent().attr("data-id"));
+    rects[i].cat=category_id;
+    draw_rects_and_infobox();
     console.log("Selected category", category_id);
-    // TOOD, sync to server
   });
 
   $("#marks").on("mouseover", ".category_select", function(){
-    //alert($(this).attr("data-id"));
     var i=parseInt($(this).attr("data-id"));
     rects[i]._strokeStyle="white";
     draw_rects_and_infobox();
-    }
-  );
+  });
 
   $("#marks").on("mouseout", ".category_select", function(){
-    //alert($(this).attr("data-id"));
     var i=parseInt($(this).attr("data-id"));
     rects[i]._strokeStyle=null;
     draw_rects_and_infobox();
-    }
-  );
+  });
+
+  $("#infobox").on("change", function(){
+    upload_infobox();
+  });
+
 }); // document.ready
 
 $.get('/static/files.txt', function(data) {
@@ -157,7 +174,6 @@ $.get('/static/files.txt', function(data) {
   ctx = canvas.getContext('2d');
   ctx.font = "12px Arial";
   ctx.lineWidth = 2;
-  var rect = {};
   var drag = false;
   var page_idx = null;
   var per_page = 25;
@@ -276,8 +292,8 @@ $.get('/static/files.txt', function(data) {
           draw_rects_and_infobox();
           draw_marks();
       }).fail(function(){ //no txt file found, clear all info.
-        //$("#mark_box").html("");
-        $("#infobox").html("");
+        draw_rects_and_infobox();
+        draw_marks();
       }); // end $.get
     }); // load_big_image
   });
@@ -303,6 +319,7 @@ $.get('/static/files.txt', function(data) {
     rect.startX = e.pageX - this.offsetLeft;
     rect.startY = e.pageY - this.offsetTop;
     rect.strokeStyle='red';
+    rect._strokeStyle=null;
     rects.push(rect);
     rects[rects.length-1].cat="x"+(rects.length-1).pad(3);
     drag = true;
@@ -310,25 +327,22 @@ $.get('/static/files.txt', function(data) {
 
   function mouseUp() { 
     drag = false;
-    $.ajax({
-      type: "POST",
-      url: "/",
-      data: curr_img +$("#infobox").html(),
-    });
+    upload_infobox();
   }
 
   function process_data_line(line){
     var elems=line.split(" ");
-    if(elems.length<5){
+    if(elems.length<5){ //malformed skip.
       return;
     }
-    rect={};
+    var rect={};
     rect.cat=elems[0];
     rect.x=elems[1];
     rect.y=elems[2];
     rect.w=elems[3];
     rect.h=elems[4];
     rect.strokeStyle=toColor(rect.cat);
+    rect._strokeStyle=null;
     rects.push(rect);
   }
 
