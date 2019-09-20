@@ -32,6 +32,47 @@ var emptylinesRe = /^[ \r\n]+$/gi;
 var image_id=null;
 var curr_img = null;
 var category = [];
+var rects =[];
+var txt; //= document.getElementById('infobox');
+var imageObj = null;
+
+
+function draw_rects_and_infobox(){
+  var html_frag = "";
+  ctx.clearRect(0, 0, canvas_w, canvas_h);
+  ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, canvas.width, canvas.height);
+  for(var i=0; i<rects.length; i++){
+    if(rects[i]._strokeStyle == null){
+      draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
+    }else{
+      draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i]._strokeStyle);
+    }
+    html_frag += rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
+  }
+  txt.innerHTML = html_frag;
+  $("#infobox").change();
+}
+
+function draw_marks(){
+  var select_controls = "";
+  for(var i = 0; i < rects.length; i++) {
+    var rect_o = rects[i];
+    var select_control = "<div class='category_select' data-id='"+ i +"' data-x='" + rect_o.x + "' data-y='" + rect_o.y + "' data-w='" + rect_o.w + "' data-h='" + rect_o.h + "'><select>" 
+    for(var j = 0; j < category.length; j++) {
+      var cat_i = parseInt(rect_o.cat);
+      var category_o = category[j];
+      if(category_o.id == cat_i) {
+        select_control = select_control + "<option selected" + " value=" + category_o.id + ">" +category_o.id+ " "+ category_o.name + "</option>";
+      } else {
+        select_control = select_control + "<option value=" + category_o.id + ">"  +category_o.id+ " "+ category_o.name + "</option>";
+      }
+    }
+    select_control = select_control + '</select><a href="#" class="del" '+ "id="+ i +'>X</a></div>';
+    select_controls = select_controls + select_control;
+   }
+
+  $("#marks").html(select_controls);
+}
 
 function draw_rect(cat_id,x,y,w,h,strokeStyle){
   ctx.strokeStyle = strokeStyle;
@@ -62,7 +103,7 @@ Number.prototype.pad = function(size) {
 }
 
 $(function(){
-
+  txt= document.getElementById('infobox');
   $("#canvas").width(canvas_w);
   $("#canvas").height(canvas_h);
 
@@ -76,15 +117,14 @@ $(function(){
   });
 
   $("#marks").on("click", ".category_select a", function(){
-    var _this = this;
-	$.ajax({
-    url:'/',
-    type:'DELETE',
-    data:curr_img + "\n" + $(this).attr("id"),
-  }).done(function(){
-    console.log("Category mark deleted.");
-    $(_this).parent().remove();
-    // TODO: Clear rect in canvas.
+    var array_id = parseInt(this.id);
+    
+    if (array_id> -1) {
+      rects.splice(array_id, 1);
+    }
+    draw_rects_and_infobox();
+    $(this).parent().remove();
+    draw_marks();
   });
 
   $("#marks").on("change", ".category_select select", function(){
@@ -92,21 +132,33 @@ $(function(){
     console.log("Selected category", category_id);
     // TOOD, sync to server
   });
-	});;
+
+  $("#marks").on("mouseover", ".category_select", function(){
+    //alert($(this).attr("data-id"));
+    var i=parseInt($(this).attr("data-id"));
+    rects[i]._strokeStyle="white";
+    draw_rects_and_infobox();
+    }
+  );
+
+  $("#marks").on("mouseout", ".category_select", function(){
+    //alert($(this).attr("data-id"));
+    var i=parseInt($(this).attr("data-id"));
+    rects[i]._strokeStyle=null;
+    draw_rects_and_infobox();
+    }
+  );
 }); // document.ready
 
 $.get('/static/files.txt', function(data) {
   urls=data;
   elems=urls.split("\n");
   var canvas = document.getElementById('canvas');
-  var txt= document.getElementById('infobox');
   ctx = canvas.getContext('2d');
   ctx.font = "12px Arial";
   ctx.lineWidth = 2;
   var rect = {};
-  var rects =[];
   var drag = false;
-  var imageObj = null;
   var page_idx = null;
   var per_page = 25;
   var pic_start_idx=null;
@@ -221,7 +273,7 @@ $.get('/static/files.txt', function(data) {
               process_data_line(lines[i]);
             }
           }
-          draw_rects();
+          draw_rects_and_infobox();
           draw_marks();
       }).fail(function(){ //no txt file found, clear all info.
         //$("#mark_box").html("");
@@ -280,38 +332,6 @@ $.get('/static/files.txt', function(data) {
     rects.push(rect);
   }
 
-  function draw_rects(){
-    var html_frag = "";
-    for(var i=0; i<rects.length; i++){
-      draw_rect(rects[i].cat, rects[i].x, rects[i].y, rects[i].w, rects[i].h, rects[i].strokeStyle);
-      html_frag += rects[i].cat+" " + parseFloat(rects[i].x).toFixed(6)+" "+ parseFloat(rects[i].y).toFixed(6) +" " + Math.abs(parseFloat(rects[i].w).toFixed(6)) + " " + Math.abs(parseFloat(rects[i].h).toFixed(6)) +"\n" ;
-    }
-    txt.innerHTML = html_frag;
-    $("#infobox").change();
-  }
-
-  function draw_marks(){
-  	var select_controls = "";
-  	for(var i = 0; i < rects.length; i++) {
-      var rect_o = rects[i];
-  		var select_control = "<div class='category_select' data-x='" + rect_o.x + "' data-y='" + rect_o.y + "' data-w='" + rect_o.w + "' data-h='" + rect_o.h + "'><select>" 
-  		for(var j = 0; j < category.length; j++) {
-  			var cat_i = parseInt(rect_o.cat);
-        var category_o = category[j];
-        if(category_o.id == cat_i) {
-          select_control = select_control + "<option selected" + " value=" + category_o.id + ">" + category_o.name + "</option>";
-        } else {
-          select_control = select_control + "<option value=" + category_o.id + ">" + category_o.name + "</option>";
-        }
-  		}
-  		select_control = select_control + '</select><a href="#" class="del" '+ "id="+ i +'>X</a></div>';
-  		select_controls = select_controls + select_control;
-	}
-  	
-
-	$("#marks").html(select_controls);
-  }
-
   function mouseMove(e) {
     if (drag) {
       var rect=rects[rects.length-1];
@@ -321,7 +341,7 @@ $.get('/static/files.txt', function(data) {
       rect.h = (e.pageY - this.offsetTop - rect.startY)/canvas_h;
       rect.x = rect.startX/canvas_w + rect.w/2;
       rect.y = rect.startY/canvas_h + rect.h/2;
-      draw_rects();
+      draw_rects_and_infobox();
       draw_marks();
       console.log(rect);
     }
