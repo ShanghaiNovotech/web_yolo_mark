@@ -125,6 +125,9 @@ $(function(){
   // Load categories from server
   $.get('/static/coco.names', function(data) {
     var lines = data.split("\n");
+    if(lines[lines.length-1] == '') {
+      lines.pop();  
+    }
     for(var i = 0; i < lines.length; i++) {
       category.push({id: i, name: lines[i]});  
     }
