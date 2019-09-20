@@ -3,10 +3,16 @@ import os
 
 from flask import Flask, render_template, request
 from flask_bootstrap import Bootstrap
+from werkzeug.utils import secure_filename
+
+import sys
 
 app = Flask(__name__)
 Bootstrap(app)
 
+lines=[]
+with open('static/files.txt','r') as f:
+    lines = f.read().split("\n")
 
 @app.route('/', methods=["GET"])
 def index():
@@ -15,31 +21,12 @@ def index():
 
 @app.route('/', methods=["POST"])
 def index_post():
-    data_ = request.get_data(as_text=True)
-    data = data_.split('.jpg')
-    txt = data[0] + ".txt"
-    result = data[1]
-
-    with open(txt, 'w') as f:
-        f.writelines(result)
-        
-    return "200 OK"
-
-
-@app.route('/', methods=['DELETE'])
-def index_del():
-    data_ = request.get_data(as_text=True)
-    data = data_.split("\n")
-    txt = data[0].replace(".jpg",'.txt')
-    line = int(data[1])
-    content = []
-    with open(txt, 'r') as f:
-        content = f.readlines()
-        del(content[line])
-        
-    with open(txt, 'w') as f:
-        f.writelines(content)
-
+    safe_fn = lines[int(request.form["idx"])]
+    filename, file_extension = os.path.splitext(safe_fn)
+    txt_fn = filename + ".txt" 
+    f=open(txt_fn, 'w')
+    f.write(request.form["val"])
+    f.close()
     return "200 OK"
 
 @app.route('/login')

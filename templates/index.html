@@ -36,6 +36,7 @@ var rects =[];
 var txt; //= document.getElementById('infobox');
 var imageObj = null;
 var old_infobox_data=null;
+var curr_img_idx=null;
 
 function upload_infobox(){
   new_infobox_data=$("#infobox").html();
@@ -47,7 +48,7 @@ function upload_infobox(){
   $.ajax({
     type: "POST",
     url: "/",
-    data: curr_img + new_infobox_data,
+    data: {idx:curr_img_idx, fn:curr_img, val:new_infobox_data}
   });
 }
 
@@ -268,16 +269,13 @@ $.get('/static/files.txt', function(data) {
     $(this).addClass('active');
     image_id=this.id;
     image_url=$("#"+this.id).attr('src');
-    txt_url="";
-    if (image_url.indexOf(".jpg") > -1) {
-       txt_url = image_url.replace('.jpg','.txt' )+"?"+Math.random();
-    }else{
-       //nothing yet
-    }
+    txt_url= image_url.substr(0, image_url.lastIndexOf("."))+".txt?rand="+Math.random();
+
     //print filename.
     $("#pic_info").html(image_url.split("/").slice(-1)[0]);
     load_big_image(image_url, function(){
       curr_img = image_url;
+      curr_img_idx = parseInt(image_id.split("_")[1]);
       $("#pic_info_link").attr("href", image_url);
       $.get(txt_url, function(data) {
         var _data=data.replace(emptylinesRe,"");
